@@ -26,7 +26,7 @@ const LoginPage = () => {
   return (
     <div style={styles.container}>
       <div style={styles.card}>
-        <h2 style={styles.title}>Mini OneLake</h2>
+        <h2 style={styles.title}>Data Sphere</h2>
         <p style={styles.subtitle}>Sign in to your account</p>
         {error && <div style={styles.error}>{error}</div>}
         <form onSubmit={handleSubmit}>
