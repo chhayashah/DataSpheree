@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import LoginPage from "../features/auth/pages/LoginPage";
 import SignupPage from "../features/auth/pages/SignupPage";
@@ -7,24 +7,41 @@ import DataUploadPage from "../features/data/pages/DataUploadPage";
 import DataTablePage from "../features/data/pages/DataTablePage";
 import InsightsPage from "../features/dashboard/pages/InsightsPage";
 import ActivityPage from "../features/dashboard/pages/ActivityPage";
-
-
+import { PageSpinner } from "../components/ui/Misc";
 
 const PrivateRoute = ({ children }) => {
   const { user, loading } = useAuth();
-  if (loading) return <div>Loading...</div>;
-  if (!user) {
-    window.location.href = "/login";
-    return null;
-  }
+  if (loading) return <PageSpinner label="Checking session…" />;
+  if (!user) return <Navigate to="/login" replace />;
+  return children;
+};
+
+const PublicOnlyRoute = ({ children }) => {
+  const { user, loading } = useAuth();
+  if (loading) return <PageSpinner label="Checking session…" />;
+  if (user) return <Navigate to="/dashboard" replace />;
   return children;
 };
 
 const AppRoutes = () => {
   return (
     <Routes>
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/signup" element={<SignupPage />} />
+      <Route
+        path="/login"
+        element={
+          <PublicOnlyRoute>
+            <LoginPage />
+          </PublicOnlyRoute>
+        }
+      />
+      <Route
+        path="/signup"
+        element={
+          <PublicOnlyRoute>
+            <SignupPage />
+          </PublicOnlyRoute>
+        }
+      />
       <Route
         path="/dashboard"
         element={
@@ -73,7 +90,6 @@ const AppRoutes = () => {
           </PrivateRoute>
         }
       />
-      
     </Routes>
   );
 };

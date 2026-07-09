@@ -1,18 +1,28 @@
 import { BrowserRouter, useLocation } from "react-router-dom";
-import { AuthProvider } from "./context/AuthContext";
+import { AuthProvider, useAuth } from "./context/AuthContext";
+import { ToastProvider } from "./context/ToastContext";
 import AppRoutes from "./routes/AppRoutes";
-import Navbar from "./components/layout/Navbar";
-import { useAuth } from "./context/AuthContext";
+import Sidebar from "./components/layout/Sidebar";
+import Topbar from "./components/layout/Topbar";
 
 const AppLayout = () => {
   const { user } = useAuth();
   const location = useLocation();
-  const hideNavbar = ["/login", "/signup"].includes(location.pathname);
+  const isAuthPage = ["/login", "/signup"].includes(location.pathname);
+
+  if (!user || isAuthPage) {
+    return <AppRoutes />;
+  }
 
   return (
-    <div style={{ background: "#f8fafc", minHeight: "100vh" }}>
-      {user && !hideNavbar && <Navbar />}
-      <AppRoutes />
+    <div className="min-h-screen bg-canvas">
+      <Sidebar />
+      <div className="pl-60">
+        <Topbar pathname={location.pathname} />
+        <main className="p-8 max-w-[1280px] mx-auto">
+          <AppRoutes />
+        </main>
+      </div>
     </div>
   );
 };
@@ -20,9 +30,11 @@ const AppLayout = () => {
 function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <AppLayout />
-      </AuthProvider>
+      <ToastProvider>
+        <AuthProvider>
+          <AppLayout />
+        </AuthProvider>
+      </ToastProvider>
     </BrowserRouter>
   );
 }

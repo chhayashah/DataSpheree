@@ -1,8 +1,14 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
+import { useToast } from "../../../context/ToastContext";
+import AuthBrandPanel from "../../../components/layout/AuthBrandPanel";
+import Input from "../../../components/ui/Input";
+import Button from "../../../components/ui/Button";
 
 const LoginPage = () => {
   const { login } = useAuth();
+  const toast = useToast();
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -17,35 +23,46 @@ const LoginPage = () => {
     try {
       await login(form.email, form.password);
     } catch (err) {
-      setError(err.response?.data?.message || "Login failed");
+      const msg =
+        err.response?.data?.message ||
+        "We couldn't sign you in. Check your details and try again.";
+      setError(msg);
+      toast(msg, "error");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div style={styles.container}>
-      <div style={styles.card}>
-        <h2 style={styles.title}>Data Sphere</h2>
-        <p style={styles.subtitle}>Sign in to your account</p>
-        {error && <div style={styles.error}>{error}</div>}
-        <form onSubmit={handleSubmit}>
-          <div style={styles.field}>
-            <label style={styles.label}>Email</label>
-            <input
-              style={styles.input}
+    <div className="min-h-screen flex bg-canvas">
+      <AuthBrandPanel />
+      <div className="flex-1 flex items-center justify-center px-6">
+        <div className="w-full max-w-sm">
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+            Sign in
+          </h1>
+          <p className="text-sm text-slate-400 mt-1 mb-8">
+            Welcome back — enter your details to continue.
+          </p>
+
+          {error && (
+            <div className="mb-5 rounded-lg bg-danger-soft px-3.5 py-2.5 text-sm text-danger">
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <Input
+              label="Email"
               type="email"
               name="email"
               value={form.email}
               onChange={handleChange}
-              placeholder="you@example.com"
+              placeholder="you@company.com"
               required
             />
-          </div>
-          <div style={styles.field}>
-            <label style={styles.label}>Password</label>
-            <input
-              style={styles.input}
+            <Input
+              label="Password"
               type="password"
               name="password"
               value={form.password}
@@ -53,89 +70,24 @@ const LoginPage = () => {
               placeholder="••••••••"
               required
             />
-          </div>
-          <button style={styles.button} type="submit" disabled={loading}>
-            {loading ? "Signing in..." : "Sign In"}
-          </button>
-        </form>
-        <p style={styles.footer}>
-          Don't have an account?{" "}
-          <a href="/signup" style={styles.link}>
-            Sign up
-          </a>
-        </p>
+            <Button type="submit" size="lg" loading={loading} className="mt-2">
+              {loading ? "Signing in…" : "Sign in"}
+            </Button>
+          </form>
+
+          <p className="text-center text-sm text-slate-400 mt-6">
+            Don't have an account?{" "}
+            <Link
+              to="/signup"
+              className="text-accent font-medium hover:underline"
+            >
+              Create one
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );
-};
-
-const styles = {
-  container: {
-    minHeight: "100vh",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    background: "#f0f2f5",
-  },
-  card: {
-    background: "#fff",
-    padding: "2rem",
-    borderRadius: "12px",
-    boxShadow: "0 2px 16px rgba(0,0,0,0.08)",
-    width: "100%",
-    maxWidth: "400px",
-  },
-  title: {
-    margin: "0 0 4px",
-    fontSize: "24px",
-    fontWeight: "600",
-    color: "#1a1a2e",
-  },
-  subtitle: { margin: "0 0 24px", color: "#666", fontSize: "14px" },
-  field: { marginBottom: "16px" },
-  label: {
-    display: "block",
-    marginBottom: "6px",
-    fontSize: "13px",
-    fontWeight: "500",
-    color: "#333",
-  },
-  input: {
-    width: "100%",
-    padding: "10px 12px",
-    border: "1px solid #ddd",
-    borderRadius: "8px",
-    fontSize: "14px",
-    outline: "none",
-    boxSizing: "border-box",
-  },
-  button: {
-    width: "100%",
-    padding: "11px",
-    background: "#4f46e5",
-    color: "#fff",
-    border: "none",
-    borderRadius: "8px",
-    fontSize: "15px",
-    fontWeight: "500",
-    cursor: "pointer",
-    marginTop: "8px",
-  },
-  error: {
-    background: "#fef2f2",
-    color: "#dc2626",
-    padding: "10px 12px",
-    borderRadius: "8px",
-    fontSize: "13px",
-    marginBottom: "16px",
-  },
-  footer: {
-    textAlign: "center",
-    marginTop: "20px",
-    fontSize: "13px",
-    color: "#666",
-  },
-  link: { color: "#4f46e5", textDecoration: "none", fontWeight: "500" },
 };
 
 export default LoginPage;

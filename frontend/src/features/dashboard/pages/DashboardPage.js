@@ -14,16 +14,23 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
+import { RefreshCw, Database, Rows3, Users, UploadCloud } from "lucide-react";
+import { Link } from "react-router-dom";
 import axiosInstance from "../../../services/axiosInstance";
 import { useAuth } from "../../../context/AuthContext";
+import { Card, CardHeader, CardBody } from "../../../components/ui/Card";
+import Badge from "../../../components/ui/Badge";
+import Button from "../../../components/ui/Button";
+import { StatCard, PageHeader } from "../../../components/ui/Misc";
+import { DashboardSkeleton } from "../../../components/ui/Skeleton";
 
 const COLORS = [
-  "#4f46e5",
-  "#0ea5e9",
-  "#10b981",
-  "#f59e0b",
-  "#ef4444",
-  "#8b5cf6",
+  "#3B5BFD",
+  "#0EA5A4",
+  "#16A34A",
+  "#F0A93A",
+  "#DC2626",
+  "#7C6CF6",
 ];
 
 const DashboardPage = () => {
@@ -56,341 +63,228 @@ const DashboardPage = () => {
     fetchData();
   }, []); // eslint-disable-line
 
-  if (loading) return <div style={styles.loading}>Loading dashboard...</div>;
+  if (loading) return <DashboardSkeleton />;
 
-  // Pie chart data
   const pieData =
     topUsers.length > 0
       ? topUsers.map((u) => ({ name: u.name, value: u.uploadCount }))
       : [{ name: "No data", value: 1 }];
 
-  // Source distribution for pie
-  // const sourceData = [
-  //   { name: "CSV", value: stats?.totalRecords || 0 },
-  //   { name: "API", value: 0 },
-  // ];
-
   return (
-    <div style={styles.page}>
-      {/* Page Header */}
-      <div style={styles.pageHeader}>
-        <div>
-          <h1 style={styles.title}>Dashboard</h1>
-          <p style={styles.subtitle}>Welcome back, {user?.name}!</p>
-        </div>
-        <button style={styles.refreshBtn} onClick={fetchData}>
-          Refresh
-        </button>
-      </div>
+    <div>
+      <PageHeader
+        title="Dashboard"
+        subtitle={`Welcome back, ${user?.name}`}
+        action={
+          <Button variant="outline" size="sm" onClick={fetchData}>
+            <RefreshCw size={13} /> Refresh
+          </Button>
+        }
+      />
 
-      {/* Stats Cards */}
-      <div style={styles.statsGrid}>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
         <StatCard
           label="Total Records"
           value={stats?.totalRecords ?? 0}
-          color="#4f46e5"
-          border="#4f46e5"
+          accent="accent"
+          icon={Database}
         />
         <StatCard
           label="Total Rows"
           value={stats?.totalRows ?? 0}
-          color="#0ea5e9"
-          border="#0ea5e9"
+          accent="teal"
+          icon={Rows3}
         />
         <StatCard
           label="Total Users"
           value={stats?.totalUsers ?? 0}
-          color="#10b981"
-          border="#10b981"
+          accent="success"
+          icon={Users}
         />
         <StatCard
-          label="Today Uploads"
+          label="Today's Uploads"
           value={trend[trend.length - 1]?.uploads ?? 0}
-          color="#f59e0b"
-          border="#f59e0b"
+          accent="warning"
+          icon={UploadCloud}
         />
       </div>
 
-      {/* Charts Row 1 — Bar + Line */}
-      <div style={styles.row2}>
-        {/* Bar Chart — Daily Trend */}
-        <div style={styles.card}>
-          <h3 style={styles.cardTitle}>Daily Upload Trend</h3>
-          {trend.length === 0 ? (
-            <p style={styles.empty}>No data yet</p>
-          ) : (
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart
-                data={trend}
-                margin={{ top: 5, right: 10, left: -20, bottom: 5 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                <XAxis
-                  dataKey="date"
-                  tick={{ fontSize: 11, fill: "#94a3b8" }}
-                  tickFormatter={(v) => v?.slice(5)}
-                />
-                <YAxis
-                  tick={{ fontSize: 11, fill: "#94a3b8" }}
-                  allowDecimals={false}
-                />
-                <Tooltip
-                  contentStyle={{
-                    borderRadius: "8px",
-                    border: "1px solid #e2e8f0",
-                    fontSize: "12px",
-                  }}
-                  formatter={(v) => [v, "Uploads"]}
-                />
-                <Bar dataKey="uploads" fill="#4f46e5" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          )}
-        </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-5">
+        <Card>
+          <CardHeader title="Daily Upload Trend" />
+          <CardBody>
+            {trend.length === 0 ? (
+              <EmptyChart />
+            ) : (
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart
+                  data={trend}
+                  margin={{ top: 5, right: 10, left: -20, bottom: 5 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                  <XAxis
+                    dataKey="date"
+                    tick={{ fontSize: 11, fill: "#94a3b8" }}
+                    tickFormatter={(v) => v?.slice(5)}
+                  />
+                  <YAxis
+                    tick={{ fontSize: 11, fill: "#94a3b8" }}
+                    allowDecimals={false}
+                  />
+                  <Tooltip
+                    contentStyle={tooltipStyle}
+                    formatter={(v) => [v, "Uploads"]}
+                  />
+                  <Bar dataKey="uploads" fill="#3B5BFD" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </CardBody>
+        </Card>
 
-        {/* Line Chart — Rows Trend */}
-        <div style={styles.card}>
-          <h3 style={styles.cardTitle}>Rows Processed Over Time</h3>
-          {trend.length === 0 ? (
-            <p style={styles.empty}>No data yet</p>
-          ) : (
-            <ResponsiveContainer width="100%" height={220}>
-              <LineChart
-                data={trend}
-                margin={{ top: 5, right: 10, left: -20, bottom: 5 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                <XAxis
-                  dataKey="date"
-                  tick={{ fontSize: 11, fill: "#94a3b8" }}
-                  tickFormatter={(v) => v?.slice(5)}
-                />
-                <YAxis
-                  tick={{ fontSize: 11, fill: "#94a3b8" }}
-                  allowDecimals={false}
-                />
-                <Tooltip
-                  contentStyle={{
-                    borderRadius: "8px",
-                    border: "1px solid #e2e8f0",
-                    fontSize: "12px",
-                  }}
-                  formatter={(v) => [v, "Rows"]}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="totalRows"
-                  stroke="#10b981"
-                  strokeWidth={2}
-                  dot={{ fill: "#10b981", r: 4 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          )}
-        </div>
+        <Card>
+          <CardHeader title="Rows Processed Over Time" />
+          <CardBody>
+            {trend.length === 0 ? (
+              <EmptyChart />
+            ) : (
+              <ResponsiveContainer width="100%" height={220}>
+                <LineChart
+                  data={trend}
+                  margin={{ top: 5, right: 10, left: -20, bottom: 5 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                  <XAxis
+                    dataKey="date"
+                    tick={{ fontSize: 11, fill: "#94a3b8" }}
+                    tickFormatter={(v) => v?.slice(5)}
+                  />
+                  <YAxis
+                    tick={{ fontSize: 11, fill: "#94a3b8" }}
+                    allowDecimals={false}
+                  />
+                  <Tooltip
+                    contentStyle={tooltipStyle}
+                    formatter={(v) => [v, "Rows"]}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="totalRows"
+                    stroke="#0EA5A4"
+                    strokeWidth={2}
+                    dot={{ fill: "#0EA5A4", r: 4 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            )}
+          </CardBody>
+        </Card>
       </div>
 
-      {/* Charts Row 2 — Pie + Recent */}
-      <div style={styles.row2}>
-        {/* Pie Chart — Top Users */}
-        <div style={styles.card}>
-          <h3 style={styles.cardTitle}>Upload Distribution by User</h3>
-          {topUsers.length === 0 ? (
-            <p style={styles.empty}>No user data yet</p>
-          ) : (
-            <ResponsiveContainer width="100%" height={220}>
-              <PieChart>
-                <Pie
-                  data={pieData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={55}
-                  outerRadius={85}
-                  paddingAngle={3}
-                  dataKey="value"
-                >
-                  {pieData.map((entry, index) => (
-                    <Cell key={index} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  contentStyle={{
-                    borderRadius: "8px",
-                    border: "1px solid #e2e8f0",
-                    fontSize: "12px",
-                  }}
-                />
-                <Legend
-                  iconType="circle"
-                  iconSize={8}
-                  formatter={(v) => (
-                    <span style={{ fontSize: "12px", color: "#64748b" }}>
-                      {v}
-                    </span>
-                  )}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          )}
-        </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <Card>
+          <CardHeader title="Upload Distribution by User" />
+          <CardBody>
+            {topUsers.length === 0 ? (
+              <EmptyChart label="No user data yet" />
+            ) : (
+              <ResponsiveContainer width="100%" height={220}>
+                <PieChart>
+                  <Pie
+                    data={pieData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={55}
+                    outerRadius={85}
+                    paddingAngle={3}
+                    dataKey="value"
+                  >
+                    {pieData.map((entry, index) => (
+                      <Cell key={index} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip contentStyle={tooltipStyle} />
+                  <Legend
+                    iconType="circle"
+                    iconSize={8}
+                    formatter={(v) => (
+                      <span className="text-xs text-slate-500">{v}</span>
+                    )}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            )}
+          </CardBody>
+        </Card>
 
-        {/* Recent Uploads Table */}
-        <div style={styles.card}>
-          <h3 style={styles.cardTitle}>Recent Uploads</h3>
-          {recentUploads.length === 0 ? (
-            <p style={styles.empty}>No uploads yet</p>
-          ) : (
-            <>
-              <table style={styles.table}>
-                <thead>
-                  <tr>
-                    <th style={styles.th}>File</th>
-                    <th style={styles.th}>Rows</th>
-                    <th style={styles.th}>Status</th>
-                    <th style={styles.th}>By</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {recentUploads.map((r) => (
-                    <tr key={r._id} style={styles.tr}>
-                      <td style={styles.td}>{r.filename}</td>
-                      <td style={styles.td}>{r.totalRows}</td>
-                      <td style={styles.td}>
-                        <span
-                          style={{
-                            ...styles.badge,
-                            background:
-                              r.status === "processed" ? "#d1fae5" : "#fef3c7",
-                            color:
-                              r.status === "processed" ? "#065f46" : "#92400e",
-                          }}
-                        >
-                          {r.status}
-                        </span>
-                      </td>
-                      <td style={styles.td}>{r.uploadedBy?.name || "—"}</td>
+        <Card>
+          <CardHeader title="Recent Uploads" />
+          <CardBody>
+            {recentUploads.length === 0 ? (
+              <EmptyChart label="No uploads yet" />
+            ) : (
+              <>
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr>
+                      <Th>File</Th>
+                      <Th>Rows</Th>
+                      <Th>Status</Th>
+                      <Th>By</Th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-              <a href="/data" style={styles.viewAll}>
-                View all records →
-              </a>
-            </>
-          )}
-        </div>
+                  </thead>
+                  <tbody>
+                    {recentUploads.map((r) => (
+                      <tr
+                        key={r._id}
+                        className="border-b border-slate-50 last:border-0"
+                      >
+                        <Td>{r.filename}</Td>
+                        <Td className="font-data">{r.totalRows}</Td>
+                        <Td>
+                          <Badge
+                            tone={
+                              r.status === "processed" ? "success" : "warning"
+                            }
+                          >
+                            {r.status}
+                          </Badge>
+                        </Td>
+                        <Td>{r.uploadedBy?.name || "—"}</Td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <Link
+                  to="/data"
+                  className="block mt-3 text-sm text-accent font-medium hover:underline"
+                >
+                  View all records →
+                </Link>
+              </>
+            )}
+          </CardBody>
+        </Card>
       </div>
     </div>
   );
 };
 
-const StatCard = ({ label, value, color, border }) => (
-  <div style={{ ...styles.statCard, borderTop: `3px solid ${border}` }}>
-    <p style={styles.statLabel}>{label}</p>
-    <p style={{ ...styles.statValue, color }}>{value}</p>
-  </div>
+const Th = ({ children }) => (
+  <th className="text-left px-2 py-2 text-[11px] font-medium text-slate-400 border-b border-slate-100">
+    {children}
+  </th>
 );
-
-const styles = {
-  page: {
-    padding: "24px",
-    maxWidth: "1200px",
-    margin: "0 auto",
-    fontFamily: "sans-serif",
-  },
-  pageHeader: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: "24px",
-  },
-  title: { fontSize: "24px", fontWeight: "700", margin: 0, color: "#1e293b" },
-  subtitle: { fontSize: "13px", color: "#94a3b8", margin: "4px 0 0" },
-  refreshBtn: {
-    padding: "8px 16px",
-    background: "#fff",
-    border: "1px solid #e2e8f0",
-    borderRadius: "8px",
-    fontSize: "13px",
-    cursor: "pointer",
-    color: "#64748b",
-  },
-  loading: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    height: "60vh",
-    fontSize: "16px",
-    color: "#94a3b8",
-  },
-  statsGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(4, 1fr)",
-    gap: "16px",
-    marginBottom: "20px",
-  },
-  statCard: {
-    background: "#fff",
-    borderRadius: "12px",
-    padding: "20px 24px",
-    boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
-  },
-  statLabel: {
-    margin: "0 0 8px",
-    fontSize: "11px",
-    color: "#94a3b8",
-    textTransform: "uppercase",
-    letterSpacing: "0.06em",
-  },
-  statValue: { margin: 0, fontSize: "32px", fontWeight: "700" },
-  row2: {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    gap: "16px",
-    marginBottom: "20px",
-  },
-  card: {
-    background: "#fff",
-    borderRadius: "12px",
-    padding: "20px 24px",
-    boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
-  },
-  cardTitle: {
-    margin: "0 0 16px",
-    fontSize: "14px",
-    fontWeight: "600",
-    color: "#1e293b",
-  },
-  empty: {
-    color: "#94a3b8",
-    fontSize: "13px",
-    textAlign: "center",
-    padding: "40px 0",
-  },
-  table: { width: "100%", borderCollapse: "collapse", fontSize: "13px" },
-  th: {
-    textAlign: "left",
-    padding: "8px",
-    color: "#94a3b8",
-    fontWeight: "500",
-    fontSize: "12px",
-    borderBottom: "1px solid #f1f5f9",
-  },
-  tr: { borderBottom: "1px solid #f8fafc" },
-  td: { padding: "10px 8px", color: "#334155" },
-  badge: {
-    padding: "3px 10px",
-    borderRadius: "20px",
-    fontSize: "11px",
-    fontWeight: "500",
-  },
-  viewAll: {
-    display: "block",
-    marginTop: "12px",
-    fontSize: "13px",
-    color: "#4f46e5",
-    textDecoration: "none",
-  },
+const Td = ({ children, className = "" }) => (
+  <td className={`px-2 py-2.5 text-slate-700 ${className}`}>{children}</td>
+);
+const EmptyChart = ({ label = "No data yet" }) => (
+  <p className="text-sm text-slate-400 text-center py-10">{label}</p>
+);
+const tooltipStyle = {
+  borderRadius: "8px",
+  border: "1px solid #e2e8f0",
+  fontSize: "12px",
 };
 
 export default DashboardPage;
