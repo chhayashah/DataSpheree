@@ -14,7 +14,14 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import { RefreshCw, Database, Rows3, Users, UploadCloud } from "lucide-react";
+import {
+  RefreshCw,
+  Database,
+  Rows3,
+  Users,
+  UploadCloud,
+  BarChart3,
+} from "lucide-react";
 import { Link } from "react-router-dom";
 import axiosInstance from "../../../services/axiosInstance";
 import { useAuth } from "../../../context/AuthContext";
@@ -279,7 +286,10 @@ const Td = ({ children, className = "" }) => (
   <td className={`px-2 py-2.5 text-slate-700 ${className}`}>{children}</td>
 );
 const EmptyChart = ({ label = "No data yet" }) => (
-  <p className="text-sm text-slate-400 text-center py-10">{label}</p>
+  <div className="flex flex-col items-center justify-center gap-2 py-10 text-slate-300">
+    <BarChart3 size={26} strokeWidth={1.5} />
+    <p className="text-sm text-slate-400">{label}</p>
+  </div>
 );
 const tooltipStyle = {
   borderRadius: "8px",

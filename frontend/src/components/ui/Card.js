@@ -1,6 +1,6 @@
 export const Card = ({ children, className = "", ...props }) => (
   <div
-    className={`bg-white rounded-xl border border-border shadow-card ${className}`}
+    className={`bg-white rounded-xl border border-border shadow-card transition-shadow duration-200 hover:shadow-popover ${className}`}
     {...props}
   >
     {children}
