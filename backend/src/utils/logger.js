@@ -1,7 +1,7 @@
 const winston = require("winston");
 
 const logger = winston.createLogger({
-  level: process.env.NODE_ENV === "production" ? "warn" : "debug",
+  level: process.env.NODE_ENV === "production" ? "info" : "debug",
   format: winston.format.combine(
     winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
     winston.format.errors({ stack: true }),
@@ -18,14 +18,39 @@ const logger = winston.createLogger({
         winston.format.simple(),
       ),
     }),
-    new winston.transports.File({
-      filename: "src/logs/error.log",
-      level: "error",
-    }),
-    new winston.transports.File({
-      filename: "src/logs/combined.log",
-    }),
   ],
 });
 
 module.exports = logger;
+
+// const winston = require("winston");
+
+// const logger = winston.createLogger({
+//   level: process.env.NODE_ENV === "production" ? "warn" : "debug",
+//   format: winston.format.combine(
+//     winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
+//     winston.format.errors({ stack: true }),
+//     winston.format.printf(({ timestamp, level, message, stack }) =>
+//       stack
+//         ? `${timestamp} [${level}]: ${message}\n${stack}`
+//         : `${timestamp} [${level}]: ${message}`,
+//     ),
+//   ),
+//   transports: [
+//     new winston.transports.Console({
+//       format: winston.format.combine(
+//         winston.format.colorize(),
+//         winston.format.simple(),
+//       ),
+//     }),
+//     new winston.transports.File({
+//       filename: "src/logs/error.log",
+//       level: "error",
+//     }),
+//     new winston.transports.File({
+//       filename: "src/logs/combined.log",
+//     }),
+//   ],
+// });
+
+// module.exports = logger;
