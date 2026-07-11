@@ -14,7 +14,7 @@ DataSphere is a production-grade data analytics platform that simulates modern c
 | Database | MongoDB + Mongoose |
 | Frontend | React (CRA) |
 | Real-time | Socket.io |
-| Auth | JWT + RBAC |
+| Auth | JWT  |
 | Logging | Winston |
 | Container | Docker + Compose |
 
