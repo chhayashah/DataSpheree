@@ -5,9 +5,19 @@ import SignupPage from "../features/auth/pages/SignupPage";
 import DashboardPage from "../features/dashboard/pages/DashboardPage";
 import DataUploadPage from "../features/data/pages/DataUploadPage";
 import DataTablePage from "../features/data/pages/DataTablePage";
-import InsightsPage from "../features/dashboard/pages/InsightsPage";
+import DatasetDetailsPage from "../features/data/pages/DatasetDetailsPage";
+import AnalyticsPage from "../features/analytics/pages/AnalyticsPage";
 import ActivityPage from "../features/dashboard/pages/ActivityPage";
+import UsersPage from "../features/users/pages/UsersPage";
+import AuditLogPage from "../features/audit/pages/AuditLogPage";
+import NotificationsPage from "../features/notifications/pages/NotificationsPage";
+import ProfilePage from "../features/settings/pages/ProfilePage";
+import SettingsPage from "../features/settings/pages/SettingsPage";
+import MonitoringPage from "../features/monitoring/pages/MonitoringPage";
+import ReportsPage from "../features/reports/pages/ReportsPage";
 import { PageSpinner } from "../components/ui/Misc";
+import RequireRole from "../components/auth/RequireRole";
+import { PERMISSIONS } from "../constants/permissions";
 
 const PrivateRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -54,7 +64,9 @@ const AppRoutes = () => {
         path="/data/upload"
         element={
           <PrivateRoute>
-            <DataUploadPage />
+            <RequireRole permission={PERMISSIONS.DATA_UPLOAD}>
+              <DataUploadPage />
+            </RequireRole>
           </PrivateRoute>
         }
       />
@@ -67,10 +79,18 @@ const AppRoutes = () => {
         }
       />
       <Route
+        path="/data/:id"
+        element={
+          <PrivateRoute>
+            <DatasetDetailsPage />
+          </PrivateRoute>
+        }
+      />
+      <Route
         path="/insights"
         element={
           <PrivateRoute>
-            <InsightsPage />
+            <AnalyticsPage />
           </PrivateRoute>
         }
       />
@@ -79,6 +99,70 @@ const AppRoutes = () => {
         element={
           <PrivateRoute>
             <ActivityPage />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/users"
+        element={
+          <PrivateRoute>
+            <RequireRole permission={PERMISSIONS.USER_MANAGE}>
+              <UsersPage />
+            </RequireRole>
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/audit"
+        element={
+          <PrivateRoute>
+            <RequireRole permission={PERMISSIONS.AUDIT_VIEW}>
+              <AuditLogPage />
+            </RequireRole>
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/notifications"
+        element={
+          <PrivateRoute>
+            <NotificationsPage />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/profile"
+        element={
+          <PrivateRoute>
+            <ProfilePage />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/settings"
+        element={
+          <PrivateRoute>
+            <SettingsPage />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/monitoring"
+        element={
+          <PrivateRoute>
+            <RequireRole permission={PERMISSIONS.SYSTEM_MONITOR_VIEW}>
+              <MonitoringPage />
+            </RequireRole>
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/reports"
+        element={
+          <PrivateRoute>
+            <RequireRole permission={PERMISSIONS.REPORT_VIEW}>
+              <ReportsPage />
+            </RequireRole>
           </PrivateRoute>
         }
       />

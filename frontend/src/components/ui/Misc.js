@@ -1,6 +1,5 @@
 import { Loader2 } from "lucide-react";
 
-/** Small pulsing dot used next to anything driven by the real-time socket layer. */
 export const LiveDot = ({ label = "Live" }) => (
   <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-success">
     <span className="relative flex h-1.5 w-1.5">

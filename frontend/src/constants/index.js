@@ -13,5 +13,6 @@ export const ROUTES = {
 
 export const ROLES = {
   ADMIN: "admin",
-  USER: "user",
+  ANALYST: "analyst",
+  VIEWER: "viewer",
 };

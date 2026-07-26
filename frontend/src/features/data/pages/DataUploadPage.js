@@ -130,9 +130,7 @@ const DataUploadPage = () => {
             First row must be headers:
           </p>
           <pre className="font-data text-xs bg-slate-50 rounded-lg px-4 py-3 text-slate-600 leading-relaxed">
-            {`name,age,city
-Alice,25,Mumbai
-Bob,30,Delhi`}
+            {`name,age,city\nAlice,25,Mumbai\nBob,30,Delhi`}
           </pre>
           <p className="text-sm text-slate-500 mt-3">Max file size: 10MB</p>
         </CardBody>

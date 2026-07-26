@@ -16,6 +16,17 @@
   ::selection {
     @apply bg-accent/20;
   }
+
+  /* Default visible focus ring for keyboard navigation — components
+     that need a different treatment (e.g. focus-visible:ring-inset on
+     a dark Sidebar background) declare their own and this is simply
+     overridden, same specificity mechanism as any other Tailwind class. */
+  a:focus-visible,
+  button:focus-visible,
+  input:focus-visible,
+  [role="menuitem"]:focus-visible {
+    @apply outline-none ring-2 ring-accent ring-offset-2;
+  }
 }
 
 @layer utilities {
@@ -25,5 +36,24 @@
     font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
     font-variant-numeric: tabular-nums;
     font-feature-settings: "tnum" 1;
+  }
+
+  /* Visually hidden until focused — the first Tab-stop on any
+     authenticated page, jumping straight past Sidebar/Topbar to the
+     routed page content (#main-content in AppLayout). */
+  .skip-link {
+    @apply absolute left-4 top-4 z-[100] -translate-y-24 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white transition-transform focus:translate-y-0;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 }

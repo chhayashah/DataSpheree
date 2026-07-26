@@ -5,14 +5,14 @@ const {
   uploadCSV,
   getRecords,
   getRecordById,
+  deleteRecord,
+  bulkDeleteRecords,
 } = require("../controllers/dataController");
-const { protect } = require("../middleware/auth");
-const { FILE_LIMITS } = require("../constants");
+const { protect, authorize } = require("../middleware/auth");
+const { FILE_LIMITS, PERMISSIONS } = require("../constants");
 
-// Multer — memory mein file rakho (disk pe nahi)
 const upload = multer({
   storage: multer.memoryStorage(),
-  //   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB max
   limits: { fileSize: FILE_LIMITS.MAX_SIZE_BYTES },
   fileFilter: (req, file, cb) => {
     if (file.mimetype === "text/csv" || file.originalname.endsWith(".csv")) {
@@ -23,9 +23,26 @@ const upload = multer({
   },
 });
 
-// Saari routes protected hain — login zaroori
-router.post("/upload", protect, upload.single("file"), uploadCSV);
+router.post(
+  "/upload",
+  protect,
+  authorize(PERMISSIONS.DATA_UPLOAD),
+  upload.single("file"),
+  uploadCSV,
+);
 router.get("/", protect, getRecords);
+router.delete(
+  "/",
+  protect,
+  authorize(PERMISSIONS.DATA_MANAGE),
+  bulkDeleteRecords,
+);
 router.get("/:id", protect, getRecordById);
+router.delete(
+  "/:id",
+  protect,
+  authorize(PERMISSIONS.DATA_MANAGE),
+  deleteRecord,
+);
 
 module.exports = router;

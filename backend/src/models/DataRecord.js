@@ -8,7 +8,6 @@ const dataRecordSchema = new mongoose.Schema(
     },
     source: {
       type: String,
-      //   enum: ["csv", "api"],
       enum: Object.values(DATA_SOURCES),
       required: true,
     },
@@ -24,11 +23,13 @@ const dataRecordSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    fileSize: {
+      type: Number, // bytes — captured from multer's file.size at upload
+      default: null,
+    },
     status: {
       type: String,
-      //   enum: ["pending", "processed", "failed"],
-      //   default: "pending",
-      enum: Object.values(DATA_STATUS), 
+      enum: Object.values(DATA_STATUS),
       default: DATA_STATUS.PENDING,
     },
     uploadedBy: {

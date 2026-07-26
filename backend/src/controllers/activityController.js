@@ -6,6 +6,10 @@ exports.getActivity = async (req, res) => {
     const activities = await activityService.getUserActivity(
       req.user._id,
       req.user.role,
+      {
+        recordId: req.query.recordId || null,
+        targetUserId: req.query.userId || null,
+      },
     );
     res.status(200).json({ success: true, data: activities });
   } catch (error) {

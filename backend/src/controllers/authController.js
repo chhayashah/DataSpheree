@@ -31,7 +31,7 @@ exports.login = async (req, res) => {
         .json({ success: false, message: "Email and password required" });
     }
 
-    const result = await authService.loginUser({ email, password },req);
+    const result = await authService.loginUser({ email, password }, req);
 
     logger.info(`User logged in: ${email}`);
     res.status(200).json({ success: true, data: result });
@@ -47,6 +47,50 @@ exports.getMe = async (req, res) => {
     res.status(200).json({ success: true, data: user });
   } catch (error) {
     logger.error(`GetMe error: ${error.message}`);
+    res.status(400).json({ success: false, message: error.message });
+  }
+};
+
+exports.updateProfile = async (req, res) => {
+  try {
+    const user = await authService.updateProfile(req.user.id, req.body);
+    res.status(200).json({ success: true, data: user });
+  } catch (error) {
+    logger.error(`Update profile error: ${error.message}`);
+    res.status(400).json({ success: false, message: error.message });
+  }
+};
+
+exports.changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "Current and new password are required",
+      });
+    }
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: "New password must be at least 6 characters",
+      });
+    }
+
+    await authService.changePassword(req.user.id, currentPassword, newPassword);
+    res.status(200).json({ success: true, message: "Password updated" });
+  } catch (error) {
+    logger.error(`Change password error: ${error.message}`);
+    res.status(400).json({ success: false, message: error.message });
+  }
+};
+
+exports.updatePreferences = async (req, res) => {
+  try {
+    const user = await authService.updatePreferences(req.user.id, req.body);
+    res.status(200).json({ success: true, data: user });
+  } catch (error) {
+    logger.error(`Update preferences error: ${error.message}`);
     res.status(400).json({ success: false, message: error.message });
   }
 };

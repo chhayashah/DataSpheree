@@ -4,19 +4,18 @@ const app = require("./app");
 const connectDB = require("./config/db");
 const { initSocket } = require("./config/socket");
 const { initDataSocket } = require("./sockets/dataSocket");
+const { initNotificationSocket } = require("./sockets/notificationSocket");
 
 const logger = require("./utils/logger");
 
 const PORT = process.env.PORT || 5000;
 
-// HTTP server banao — Express + Socket.io dono isko use karenge
 const server = http.createServer(app);
 
-// Socket.io initialize karo
 initSocket(server);
 initDataSocket();
+initNotificationSocket();
 
-// DB connect karo phir server start karo
 const startServer = async () => {
   await connectDB();
 
@@ -27,7 +26,6 @@ const startServer = async () => {
   });
 };
 
-// Unhandled errors handle karo
 process.on("unhandledRejection", (err) => {
   logger.error(`Unhandled Rejection: ${err.message}`);
   server.close(() => process.exit(1));

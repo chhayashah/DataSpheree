@@ -1,4 +1,3 @@
-import { useState, useEffect } from "react";
 import {
   BarChart,
   Bar,
@@ -23,13 +22,15 @@ import {
   BarChart3,
 } from "lucide-react";
 import { Link } from "react-router-dom";
-import axiosInstance from "../../../services/axiosInstance";
 import { useAuth } from "../../../context/AuthContext";
+import { useSocket } from "../../../context/SocketContext";
+import { useDashboardData } from "../hooks/useDashboardData";
 import { Card, CardHeader, CardBody } from "../../../components/ui/Card";
 import Badge from "../../../components/ui/Badge";
 import Button from "../../../components/ui/Button";
 import { StatCard, PageHeader } from "../../../components/ui/Misc";
 import { DashboardSkeleton } from "../../../components/ui/Skeleton";
+import ActivityTimeline from "../../../components/ui/ActivityTimeline";
 
 const COLORS = [
   "#3B5BFD",
@@ -42,33 +43,16 @@ const COLORS = [
 
 const DashboardPage = () => {
   const { user } = useAuth();
-  const [stats, setStats] = useState(null);
-  const [trend, setTrend] = useState([]);
-  const [recentUploads, setRecentUploads] = useState([]);
-  const [topUsers, setTopUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  const fetchData = async () => {
-    try {
-      const [statsRes, trendRes, topRes] = await Promise.all([
-        axiosInstance.get("/analytics/stats"),
-        axiosInstance.get("/analytics/daily-trend"),
-        axiosInstance.get("/analytics/top-users"),
-      ]);
-      setStats(statsRes.data.data);
-      setTrend(trendRes.data.data);
-      setRecentUploads(statsRes.data.data.recentRecords || []);
-      setTopUsers(topRes.data.data || []);
-    } catch (err) {
-      console.error("Dashboard error:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchData();
-  }, []); // eslint-disable-line
+  const { connected, connecting } = useSocket();
+  const {
+    stats,
+    trend,
+    recentUploads,
+    topUsers,
+    activityFeed,
+    loading,
+    refresh,
+  } = useDashboardData();
 
   if (loading) return <DashboardSkeleton />;
 
@@ -83,9 +67,15 @@ const DashboardPage = () => {
         title="Dashboard"
         subtitle={`Welcome back, ${user?.name}`}
         action={
-          <Button variant="outline" size="sm" onClick={fetchData}>
-            <RefreshCw size={13} /> Refresh
-          </Button>
+          <div className="flex items-center gap-3">
+            <ConnectionIndicator
+              connected={connected}
+              connecting={connecting}
+            />
+            <Button variant="outline" size="sm" onClick={refresh}>
+              <RefreshCw size={13} /> Refresh
+            </Button>
+          </div>
         }
       />
 
@@ -188,7 +178,7 @@ const DashboardPage = () => {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-5">
         <Card>
           <CardHeader title="Upload Distribution by User" />
           <CardBody>
@@ -273,7 +263,32 @@ const DashboardPage = () => {
           </CardBody>
         </Card>
       </div>
+
+      <div className="grid grid-cols-1 gap-4">
+        <Card>
+          <CardHeader title="Live Activity" />
+          <CardBody>
+            <ActivityTimeline
+              entries={activityFeed}
+              emptyLabel="No activity yet this session"
+            />
+          </CardBody>
+        </Card>
+      </div>
     </div>
+  );
+};
+
+const ConnectionIndicator = ({ connected, connecting }) => {
+  const tone = connected ? "success" : connecting ? "warning" : "neutral";
+  const label = connected ? "Live" : connecting ? "Connecting…" : "Offline";
+  return (
+    <span className="flex items-center gap-1.5 text-xs text-slate-400">
+      <span
+        className={`w-1.5 h-1.5 rounded-full ${tone === "success" ? "bg-success" : tone === "warning" ? "bg-warning" : "bg-slate-300"}`}
+      />
+      {label}
+    </span>
   );
 };
 

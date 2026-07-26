@@ -1,11 +1,19 @@
 const UserActivity = require("../models/UserActivity");
+const { PERMISSIONS, hasPermission } = require("../constants");
 
-exports.logActivity = async ({ userId, action, details, req }) => {
+exports.logActivity = async ({
+  userId,
+  action,
+  details,
+  relatedRecord,
+  req,
+}) => {
   try {
     await UserActivity.create({
       user: userId,
       action,
       details: details || "",
+      relatedRecord: relatedRecord || null,
       ipAddress: req?.ip || "",
       userAgent: req?.headers["user-agent"] || "",
     });
@@ -14,8 +22,22 @@ exports.logActivity = async ({ userId, action, details, req }) => {
   }
 };
 
-exports.getUserActivity = async (userId, role) => {
-  const query = role === "admin" ? {} : { user: userId };
+exports.getUserActivity = async (
+  userId,
+  role,
+  { recordId, targetUserId } = {},
+) => {
+  const query = hasPermission(role, PERMISSIONS.ACTIVITY_VIEW_ALL)
+    ? {}
+    : { user: userId };
+
+  if (recordId) {
+    query.relatedRecord = recordId;
+  }
+
+  if (targetUserId && hasPermission(role, PERMISSIONS.ACTIVITY_VIEW_ALL)) {
+    query.user = targetUserId;
+  }
 
   const activities = await UserActivity.find(query)
     .populate("user", "name email role")
@@ -29,7 +51,6 @@ exports.getActivityStats = async () => {
   const totalLogins = await UserActivity.countDocuments({ action: "login" });
   const totalUploads = await UserActivity.countDocuments({ action: "upload" });
 
-  // Activity per day last 7 days
   const sevenDaysAgo = new Date();
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
@@ -47,7 +68,6 @@ exports.getActivityStats = async () => {
     { $sort: { "_id.date": 1 } },
   ]);
 
-  // Most active users
   const mostActive = await UserActivity.aggregate([
     {
       $group: {

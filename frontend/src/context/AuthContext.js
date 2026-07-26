@@ -1,7 +1,15 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+} from "react";
 import { useNavigate } from "react-router-dom";
 import axiosInstance from "../services/axiosInstance";
 import { useToast } from "./ToastContext";
+import { hasPermission as checkPermission } from "../constants/permissions";
 
 const AuthContext = createContext(null);
 
@@ -57,11 +65,40 @@ export const AuthProvider = ({ children }) => {
     navigate("/login");
   };
 
-  return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
-      {children}
-    </AuthContext.Provider>
+  // Stable reference (useCallback) so components that depend on it in an
+  // effect don't re-run on every unrelated AuthProvider render — only
+  // when the role actually changes (login/logout).
+  const hasPermission = useCallback(
+    (permission) => checkPermission(user?.role, permission),
+    [user?.role],
   );
+
+  // Lets self-service edits (Profile name/email, notification
+  // preferences) sync the header/sidebar display immediately, without
+  // a full re-login — merges into both React state and the localStorage
+  // copy login/register already maintain.
+  const updateUserInContext = useCallback((partial) => {
+    setUser((prev) => {
+      const next = { ...prev, ...partial };
+      localStorage.setItem("user", JSON.stringify(next));
+      return next;
+    });
+  }, []);
+
+  const value = useMemo(
+    () => ({
+      user,
+      loading,
+      login,
+      register,
+      logout,
+      hasPermission,
+      updateUserInContext,
+    }),
+    [user, loading, hasPermission, updateUserInContext],
+  );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = () => {

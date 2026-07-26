@@ -24,8 +24,16 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ["user", "admin"],
-      default: "user",
+      enum: ["admin", "analyst", "viewer"],
+      default: "viewer",
+    },
+    status: {
+      type: String,
+      enum: ["active", "suspended"],
+      default: "active",
+    },
+    preferences: {
+      notifyOnUpload: { type: Boolean, default: true },
     },
   },
   { timestamps: true },

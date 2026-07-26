@@ -1,0 +1,60 @@
+/**
+ * Client-side mirror of backend/src/constants/permissions.js.
+ */
+
+export const PERMISSIONS = {
+  DASHBOARD_VIEW: "dashboard:view",
+
+  DATA_VIEW_OWN: "data:view:own",
+  DATA_VIEW_ALL: "data:view:all",
+  DATA_UPLOAD: "data:upload",
+  DATA_MANAGE: "data:manage",
+
+  ANALYTICS_VIEW: "analytics:view",
+
+  ACTIVITY_VIEW_OWN: "activity:view:own",
+  ACTIVITY_VIEW_ALL: "activity:view:all",
+
+  USER_MANAGE: "user:manage",
+  AUDIT_VIEW: "audit:view",
+  SYSTEM_MONITOR_VIEW: "system:monitor:view",
+  REPORT_VIEW: "report:view",
+  REPORT_EXPORT: "report:export",
+};
+
+export const ROLE_PERMISSIONS = {
+  admin: [
+    PERMISSIONS.DASHBOARD_VIEW,
+    PERMISSIONS.DATA_VIEW_OWN,
+    PERMISSIONS.DATA_VIEW_ALL,
+    PERMISSIONS.DATA_UPLOAD,
+    PERMISSIONS.DATA_MANAGE,
+    PERMISSIONS.ANALYTICS_VIEW,
+    PERMISSIONS.ACTIVITY_VIEW_OWN,
+    PERMISSIONS.ACTIVITY_VIEW_ALL,
+    PERMISSIONS.USER_MANAGE,
+    PERMISSIONS.AUDIT_VIEW,
+    PERMISSIONS.SYSTEM_MONITOR_VIEW,
+    PERMISSIONS.REPORT_VIEW,
+    PERMISSIONS.REPORT_EXPORT,
+  ],
+  analyst: [
+    PERMISSIONS.DASHBOARD_VIEW,
+    PERMISSIONS.DATA_VIEW_OWN,
+    PERMISSIONS.DATA_UPLOAD,
+    PERMISSIONS.ANALYTICS_VIEW,
+    PERMISSIONS.ACTIVITY_VIEW_OWN,
+    PERMISSIONS.REPORT_VIEW,
+    PERMISSIONS.REPORT_EXPORT,
+  ],
+  viewer: [
+    PERMISSIONS.DASHBOARD_VIEW,
+    PERMISSIONS.DATA_VIEW_OWN,
+    PERMISSIONS.ANALYTICS_VIEW,
+    PERMISSIONS.ACTIVITY_VIEW_OWN,
+    PERMISSIONS.REPORT_VIEW,
+  ],
+};
+
+export const hasPermission = (role, permission) =>
+  Boolean(ROLE_PERMISSIONS[role]?.includes(permission));

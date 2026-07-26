@@ -1,29 +1,49 @@
 const DataRecord = require("../models/DataRecord");
-const User = require("../models/User");
+const { PERMISSIONS, hasPermission } = require("../constants");
 
-// Overall stats
-exports.getStats = async () => {
-  const totalRecords = await DataRecord.countDocuments();
-  const totalRows = await DataRecord.aggregate([
+const buildScopeFilter = (userId, role) =>
+  hasPermission(role, PERMISSIONS.DATA_VIEW_ALL) ? {} : { uploadedBy: userId };
+
+const buildDateFilter = (from, to) => {
+  if (!from && !to) return {};
+  const createdAt = {};
+  if (from) createdAt.$gte = new Date(from);
+  if (to) createdAt.$lte = new Date(to);
+  return { createdAt };
+};
+
+const buildFilter = (userId, role, from, to) => ({
+  ...buildScopeFilter(userId, role),
+  ...buildDateFilter(from, to),
+});
+
+exports.getStats = async (userId, role, { from, to } = {}) => {
+  const filter = buildFilter(userId, role, from, to);
+
+  const totalRecords = await DataRecord.countDocuments(filter);
+  const totalRowsAgg = await DataRecord.aggregate([
+    { $match: filter },
     { $group: { _id: null, total: { $sum: "$totalRows" } } },
   ]);
-  const totalUsers = await User.countDocuments();
-  const recentRecords = await DataRecord.find()
+  const contributors = await DataRecord.distinct("uploadedBy", filter);
+  const recentRecords = await DataRecord.find(filter)
     .sort({ createdAt: -1 })
     .limit(5)
     .populate("uploadedBy", "name email");
 
   return {
     totalRecords,
-    totalRows: totalRows[0]?.total || 0,
-    totalUsers,
+    totalRows: totalRowsAgg[0]?.total || 0,
+    totalUsers: contributors.length,
     recentRecords,
   };
 };
 
-// Top uploaders
-exports.getTopUsers = async () => {
-  const topUsers = await DataRecord.aggregate([
+exports.getTopUsers = async (userId, role, { from, to } = {}) => {
+  const filter = buildFilter(userId, role, from, to);
+
+  return DataRecord.aggregate([
+    { $match: filter },
     {
       $group: {
         _id: "$uploadedBy",
@@ -53,19 +73,14 @@ exports.getTopUsers = async () => {
       },
     },
   ]);
-
-  return topUsers;
 };
 
-// Peak upload time (hour of day)
-exports.getPeakTime = async () => {
-  const peakData = await DataRecord.aggregate([
-    {
-      $group: {
-        _id: { $hour: "$createdAt" },
-        count: { $sum: 1 },
-      },
-    },
+exports.getPeakTime = async (userId, role, { from, to } = {}) => {
+  const filter = buildFilter(userId, role, from, to);
+
+  return DataRecord.aggregate([
+    { $match: filter },
+    { $group: { _id: { $hour: "$createdAt" }, count: { $sum: 1 } } },
     { $sort: { count: -1 } },
     { $limit: 24 },
     {
@@ -84,17 +99,25 @@ exports.getPeakTime = async () => {
       },
     },
   ]);
-
-  return peakData;
 };
 
-// Daily upload trend (last 7 days)
-exports.getDailyTrend = async () => {
-  const sevenDaysAgo = new Date();
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+exports.getDailyTrend = async (userId, role, { from, to } = {}) => {
+  const rangeStart = from
+    ? new Date(from)
+    : (() => {
+        const d = new Date();
+        d.setDate(d.getDate() - 30);
+        return d;
+      })();
+  const rangeEnd = to ? new Date(to) : new Date();
 
-  const trend = await DataRecord.aggregate([
-    { $match: { createdAt: { $gte: sevenDaysAgo } } },
+  const filter = {
+    ...buildScopeFilter(userId, role),
+    createdAt: { $gte: rangeStart, $lte: rangeEnd },
+  };
+
+  return DataRecord.aggregate([
+    { $match: filter },
     {
       $group: {
         _id: {
@@ -127,69 +150,70 @@ exports.getDailyTrend = async () => {
       },
     },
   ]);
-
-  return trend;
 };
 
-// AI Insights — trend analysis + anomaly detection
-exports.getInsights = async () => {
-  const sevenDaysAgo = new Date();
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+exports.getInsights = async (userId, role, { from, to } = {}) => {
+  const trend = await exports.getDailyTrend(userId, role, { from, to });
 
-  // Daily trend last 7 days
-  const trend = await DataRecord.aggregate([
-    { $match: { createdAt: { $gte: sevenDaysAgo } } },
-    {
-      $group: {
-        _id: { $dayOfMonth: "$createdAt" },
-        uploads: { $sum: 1 },
-        totalRows: { $sum: "$totalRows" },
-      },
-    },
-    { $sort: { "_id": 1 } },
-  ]);
+  const avgUploads =
+    trend.length > 0
+      ? Number(
+          (trend.reduce((sum, d) => sum + d.uploads, 0) / trend.length).toFixed(
+            1,
+          ),
+        )
+      : 0;
 
-  // Average uploads per day
-  const avgUploads = trend.length > 0
-    ? (trend.reduce((sum, d) => sum + d.uploads, 0) / trend.length).toFixed(1)
-    : 0;
+  const anomalies = trend
+    .filter((d) => d.uploads > avgUploads * 2 && avgUploads > 0)
+    .map((d) => ({
+      type: "danger",
+      message: `Unusually high uploads on ${d.date} (${d.uploads} vs. average ${avgUploads}).`,
+    }));
 
-  // Anomaly detection — days with uploads > 2x average
-  const anomalies = trend.filter((d) => d.uploads > avgUploads * 2).map((d) => ({
-    day: d._id,
-    uploads: d.uploads,
-    message: `Day ${d._id}: Unusually high uploads (${d.uploads} vs avg ${avgUploads})`,
-  }));
+  const peakDay = trend.reduce(
+    (max, d) => (d.uploads > (max?.uploads || 0) ? d : max),
+    null,
+  );
 
-  // Top performing day
-  const peakDay = trend.reduce((max, d) => d.uploads > (max?.uploads || 0) ? d : max, null);
+  const { totalRecords, totalRows } = await exports.getStats(userId, role, {
+    from,
+    to,
+  });
 
-  // Total stats
-  const totalRecords = await DataRecord.countDocuments();
-  const totalRows = await DataRecord.aggregate([
-    { $group: { _id: null, total: { $sum: "$totalRows" } } },
-  ]);
-
-  // Smart suggestions
   const suggestions = [];
   if (totalRecords === 0) {
-    suggestions.push({ type: "info", message: "Start by uploading your first CSV file!" });
+    suggestions.push({
+      type: "info",
+      message:
+        "No datasets in this range yet — try a wider date range or upload a CSV.",
+    });
   }
   if (totalRecords > 0 && avgUploads < 1) {
-    suggestions.push({ type: "warning", message: "Upload frequency is low — try uploading data daily for better insights." });
+    suggestions.push({
+      type: "warning",
+      message:
+        "Upload frequency is low in this range — more frequent uploads improve trend accuracy.",
+    });
   }
   if (anomalies.length > 0) {
-    suggestions.push({ type: "alert", message: `${anomalies.length} anomaly detected in upload pattern.` });
+    suggestions.push({
+      type: "danger",
+      message: `${anomalies.length} anomaly detected in this range's upload pattern.`,
+    });
   }
-  if (totalRecords >= 5) {
-    suggestions.push({ type: "success", message: "Great data volume! Consider running aggregation analysis." });
+  if (totalRecords >= 5 && anomalies.length === 0) {
+    suggestions.push({
+      type: "success",
+      message: "Upload pattern looks steady across this range.",
+    });
   }
 
   return {
     summary: {
       totalRecords,
-      totalRows: totalRows[0]?.total || 0,
-      avgUploadsPerDay: Number(avgUploads),
+      totalRows,
+      avgUploadsPerDay: avgUploads,
       activeDays: trend.length,
     },
     trend,

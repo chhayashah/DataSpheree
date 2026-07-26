@@ -9,8 +9,25 @@ const userActivitySchema = new mongoose.Schema(
     },
     action: {
       type: String,
-      enum: ["login", "logout", "upload", "view", "download"],
+      enum: [
+        "login",
+        "logout",
+        "upload",
+        "view",
+        "download",
+        "delete",
+        "invite",
+        "role_change",
+        "suspend",
+        "activate",
+        "update",
+      ],
       required: true,
+    },
+    relatedRecord: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "DataRecord",
+      default: null,
     },
     details: {
       type: String,

@@ -10,7 +10,7 @@ const parseCSV = (buffer) => {
     readable
       .pipe(
         parse({
-          columns: true, // pehli row headers maano
+          columns: true,
           skip_empty_lines: true,
           trim: true,
         }),
