@@ -95,7 +95,7 @@ export const AuthProvider = ({ children }) => {
       hasPermission,
       updateUserInContext,
     }),
-    [user, loading, hasPermission, updateUserInContext],
+    [user,, login, logout, register, loading, hasPermission, updateUserInContext],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
