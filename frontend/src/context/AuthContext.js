@@ -33,37 +33,43 @@ export const AuthProvider = ({ children }) => {
     setLoading(false);
   }, []);
 
-  const login = async (email, password) => {
-    const res = await axiosInstance.post("/auth/login", { email, password });
-    const { token, user } = res.data.data;
-    localStorage.setItem("token", token);
-    localStorage.setItem("user", JSON.stringify(user));
-    setUser(user);
-    toast(`Welcome back, ${user.name.split(" ")[0]}`, "success");
-    navigate("/dashboard");
-  };
+  const login = useCallback(
+    async (email, password) => {
+      const res = await axiosInstance.post("/auth/login", { email, password });
+      const { token, user } = res.data.data;
+      localStorage.setItem("token", token);
+      localStorage.setItem("user", JSON.stringify(user));
+      setUser(user);
+      toast(`Welcome back, ${user.name.split(" ")[0]}`, "success");
+      navigate("/dashboard");
+    },
+    [navigate, toast],
+  );
 
-  const register = async (name, email, password) => {
-    const res = await axiosInstance.post("/auth/register", {
-      name,
-      email,
-      password,
-    });
-    const { token, user } = res.data.data;
-    localStorage.setItem("token", token);
-    localStorage.setItem("user", JSON.stringify(user));
-    setUser(user);
-    toast("Account created — welcome to DataSphere", "success");
-    navigate("/dashboard");
-  };
+  const register = useCallback(
+    async (name, email, password) => {
+      const res = await axiosInstance.post("/auth/register", {
+        name,
+        email,
+        password,
+      });
+      const { token, user } = res.data.data;
+      localStorage.setItem("token", token);
+      localStorage.setItem("user", JSON.stringify(user));
+      setUser(user);
+      toast("Account created — welcome to DataSphere", "success");
+      navigate("/dashboard");
+    },
+    [navigate, toast],
+  );
 
-  const logout = () => {
+  const logout = useCallback(() => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     setUser(null);
     toast("You've been signed out", "info");
     navigate("/login");
-  };
+  }, [navigate, toast]);
 
   // Stable reference (useCallback) so components that depend on it in an
   // effect don't re-run on every unrelated AuthProvider render — only
@@ -95,7 +101,7 @@ export const AuthProvider = ({ children }) => {
       hasPermission,
       updateUserInContext,
     }),
-    [user,, login, logout, register, loading, hasPermission, updateUserInContext],
+    [user, login, logout, register, loading, hasPermission, updateUserInContext],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

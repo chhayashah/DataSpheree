@@ -24,7 +24,6 @@ const NotificationsPage = () => {
     unreadCount,
     pagination,
     loading,
-    page,
     setPage,
     markRead,
     markAllRead,
