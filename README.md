@@ -6,6 +6,23 @@
 
 DataSphere is a production-grade data analytics platform that simulates modern cloud data systems. It supports real-time data ingestion, processing, and visualization with AI-powered insights.
 
+## Live Demo
+
+- **App:** https://data-spheree.vercel.app
+- **API:** https://datasphere-backend.onrender.com
+
+### Test Credentials
+
+| Role  | Email            | Password    |
+|-------|------------------|-------------|
+| Admin | test@gmail.com   | Secret123   |
+
+> ⚠️ **Note:** The backend is hosted on Render's free tier, which spins
+> down after ~15 minutes of inactivity. The first request after idle
+> time can take 30–60 seconds to respond while the server wakes up —
+> this is expected behavior, not a bug. Please wait before assuming
+> the app is broken.
+
 ## Tech Stack
 
 | Layer | Technology |
